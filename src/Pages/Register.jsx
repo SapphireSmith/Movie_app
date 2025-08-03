@@ -23,6 +23,27 @@ const GENRES = [
 
 const GENDERS = ["Male", "Female", "Other"];
 
+// Random data helpers
+const randomBios = [
+  "Movie enthusiast who loves exploring different genres and discovering hidden gems.",
+  "Cinephile and popcorn lover.",
+  "Always up for a movie marathon!",
+  "I rate movies by how much popcorn I eat.",
+  "Film buff with a passion for thrillers and sci-fi.",
+];
+
+const getRandomInt = (min, max) =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
+
+const getRandomAvatar = (gender) => {
+  if (gender === "Male")
+    return `https://randomuser.me/api/portraits/men/${getRandomInt(10, 99)}.jpg`;
+  if (gender === "Female")
+    return `https://randomuser.me/api/portraits/women/${getRandomInt(10, 99)}.jpg`;
+  // For "Other", use a neutral avatar
+  return `https://randomuser.me/api/portraits/lego/${getRandomInt(1, 9)}.jpg`;
+};
+
 const steps = [
   {
     label: "What's your name?",
@@ -180,7 +201,16 @@ const Register = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    localStorage.setItem("movieapp_user", JSON.stringify(form));
+    // Enrich the profile with random data
+    const enrichedProfile = {
+      ...form,
+      bio: randomBios[getRandomInt(0, randomBios.length - 1)],
+      favoriteMovies: getRandomInt(5, 50),
+      watchedMovies: getRandomInt(50, 300),
+      avatar: getRandomAvatar(form.gender),
+      favoriteGenres: form.genres,
+    };
+    localStorage.setItem("movieAppProfile", JSON.stringify(enrichedProfile));
     alert("Registration successful!");
     setForm({
       name: "",
