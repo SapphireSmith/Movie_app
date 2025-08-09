@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 
 // Simple UI Components
 const Button = ({ children, onClick, variant = "primary", className = "", disabled = false }) => {
@@ -274,122 +274,102 @@ const MovieCard = ({ movie, onToggleFavorite, onRate, userRating, isFavorite }) 
 }
 
 export default function HomePage() {
-  const [movies, setMovies] = useState([])
-  const [filteredMovies, setFilteredMovies] = useState([])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedGenre, setSelectedGenre] = useState("")
-  const [selectedType, setSelectedType] = useState("all")
-  const [minRating, setMinRating] = useState("")
-  const [sortBy, setSortBy] = useState("popularity")
-  const [showFilters, setShowFilters] = useState(false)
-  const [favorites, setFavorites] = useState([])
-  const [userRatings, setUserRatings] = useState({})
-  const [loading, setLoading] = useState(false)
+  const [movies, setMovies] = useState([]);
+  const [filteredMovies, setFilteredMovies] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState("");
+  const [selectedType, setSelectedType] = useState("all");
+  const [minRating, setMinRating] = useState("");
+  const [sortBy, setSortBy] = useState("popularity");
+  const [showFilters, setShowFilters] = useState(false);
+  const [favorites, setFavorites] = useState([]);
+  const [userRatings, setUserRatings] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1); // New state for pagination
+  const [totalPages, setTotalPages] = useState(1); // Total pages from TMDB API
 
   // Fetch movies from TMDB
   useEffect(() => {
-    setLoading(true)
+    setLoading(true);
 
     const fetchMovies = async () => {
-      let url = `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&language=en-US&page=1`
+      let url = `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&language=en-US&page=${currentPage}`;
 
       // If there's a search query, use the search endpoint
       if (searchQuery) {
         url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=en-US&query=${encodeURIComponent(
           searchQuery
-        )}&page=1&include_adult=false`
+        )}&page=${currentPage}&include_adult=false`;
       }
 
       // Add genre filter
       if (selectedGenre) {
-        url += `&with_genres=${selectedGenre}`
+        url += `&with_genres=${selectedGenre}`;
       }
 
       // Add minimum rating filter
       if (minRating) {
-        url += `&vote_average.gte=${minRating}`
+        url += `&vote_average.gte=${minRating}`;
       }
 
       // Fetch data
       try {
-        const res = await fetch(url)
-        const data = await res.json()
-        setMovies(data.results || [])
+        const res = await fetch(url);
+        const data = await res.json();
+        setMovies(data.results || []);
+        setTotalPages(data.total_pages || 1); // Update total pages
       } catch (error) {
-        console.error("Error fetching movies:", error)
+        console.error("Error fetching movies:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchMovies()
-  }, [searchQuery, selectedGenre, minRating, sortBy])
+    fetchMovies();
+  }, [searchQuery, selectedGenre, minRating, sortBy, currentPage]); // Include currentPage as a dependency
 
   // Load user data from localStorage
   useEffect(() => {
-    const savedFavorites = localStorage.getItem("movieAppFavorites")
-    const savedRatings = localStorage.getItem("movieAppRatings")
-    if (savedFavorites) setFavorites(JSON.parse(savedFavorites))
-    if (savedRatings) setUserRatings(JSON.parse(savedRatings))
-  }, [])
-
-  // Filter and sort movies
-  useEffect(() => {
-    let filtered = movies
-
-    // Genre filter
-    if (selectedGenre) {
-      filtered = filtered.filter((movie) => movie.genre_ids.includes(Number.parseInt(selectedGenre)))
-    }
-
-    // Type filter (TMDB API returns only movies here, but you can extend for TV)
-    if (selectedType !== "all") {
-      // For demonstration, skip this unless you fetch TV shows too
-    }
-
-    // Rating filter
-    if (minRating) {
-      filtered = filtered.filter((movie) => movie.vote_average >= Number.parseFloat(minRating))
-    }
-
-    // Sort movies
-    filtered = [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case "rating":
-          return b.vote_average - a.vote_average
-        case "year":
-          return new Date(b.release_date) - new Date(a.release_date)
-        case "title":
-          return a.title.localeCompare(b.title)
-        default:
-          return 0
-      }
-    })
-
-    setFilteredMovies(filtered)
-  }, [movies, selectedGenre, selectedType, minRating, sortBy])
+    const savedFavorites = localStorage.getItem("movieAppFavorites");
+    const savedRatings = localStorage.getItem("movieAppRatings");
+    if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
+    if (savedRatings) setUserRatings(JSON.parse(savedRatings));
+  }, []);
 
   const handleToggleFavorite = (movieId) => {
     const newFavorites = favorites.includes(movieId)
       ? favorites.filter((id) => id !== movieId)
-      : [...favorites, movieId]
-    setFavorites(newFavorites)
-    localStorage.setItem("movieAppFavorites", JSON.stringify(newFavorites))
-  }
+      : [...favorites, movieId];
+    setFavorites(newFavorites);
+    localStorage.setItem("movieAppFavorites", JSON.stringify(newFavorites));
+  };
 
   const handleRateMovie = (movieId, rating) => {
-    const newRatings = { ...userRatings, [movieId]: rating }
-    setUserRatings(newRatings)
-    localStorage.setItem("movieAppRatings", JSON.stringify(newRatings))
-  }
+    const newRatings = { ...userRatings, [movieId]: rating };
+    setUserRatings(newRatings);
+    localStorage.setItem("movieAppRatings", JSON.stringify(newRatings));
+  };
 
   const clearFilters = () => {
-    setSearchQuery("")
-    setSelectedGenre("")
-    setSelectedType("all")
-    setMinRating("")
-    setSortBy("popularity")
-  }
+    setSearchQuery("");
+    setSelectedGenre("");
+    setSelectedType("all");
+    setMinRating("");
+    setSortBy("popularity");
+    setCurrentPage(1); // Reset to the first page
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -468,8 +448,7 @@ export default function HomePage() {
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-gray-600">
-            Showing {filteredMovies.length} results
-            {searchQuery && ` for "${searchQuery}"`}
+            Showing {movies.length} results on page {currentPage} of {totalPages}
           </p>
         </div>
 
@@ -478,7 +457,7 @@ export default function HomePage() {
           <div className="flex justify-center items-center py-12">
             <div className="text-lg text-gray-600">Loading movies...</div>
           </div>
-        ) : filteredMovies.length === 0 ? (
+        ) : movies.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-500 text-lg mb-4">No movies found</div>
             <Button onClick={clearFilters} variant="primary">
@@ -487,15 +466,11 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {filteredMovies.map((movie) => (
+            {movies.map((movie) => (
               <Card key={movie.id} className="group hover:shadow-lg transition-shadow duration-300">
                 <div className="relative">
                   <img
-                    src={
-                      movie.poster_path
-                        ? `${TMDB_IMAGE_BASE}${movie.poster_path}`
-                        : "/placeholder.svg"
-                    }
+                    src={movie.poster_path ? `${TMDB_IMAGE_BASE}${movie.poster_path}` : "/placeholder.svg"}
                     alt={movie.title}
                     className="w-full h-64 object-cover"
                   />
@@ -503,77 +478,38 @@ export default function HomePage() {
                     onClick={() => handleToggleFavorite(movie.id)}
                     className="absolute top-2 right-2 p-2 bg-white bg-opacity-80 rounded-full hover:bg-opacity-100 transition-all"
                   >
-                    {/* Heart icon logic */}
-                    <svg
-                      className={`h-5 w-5 ${favorites.includes(movie.id) ? "text-red-500 fill-current" : "text-gray-400"}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                      />
-                    </svg>
+                    <Heart filled={favorites.includes(movie.id)} />
                   </button>
-                  <div className="absolute top-2 left-2 px-2 py-1 bg-black bg-opacity-70 text-white text-xs rounded">
-                    Movie
-                  </div>
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-lg mb-2 line-clamp-1">{movie.title}</h3>
                   <p className="text-gray-600 text-sm mb-3 line-clamp-2">{movie.overview}</p>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-gray-500">
-                      {movie.release_date ? new Date(movie.release_date).getFullYear() : "N/A"}
-                    </span>
-                    <div className="flex items-center space-x-1">
-                      <svg className="h-4 w-4 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                        />
-                      </svg>
-                      <span className="text-sm font-medium">{movie.vote_average.toFixed(1)}</span>
-                    </div>
-                  </div>
-                  <div className="border-t pt-3">
-                    <div className="text-sm text-gray-600 mb-2">Your Rating:</div>
-                    {/* StarRating logic */}
-                    <div className="flex items-center space-x-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          className="cursor-pointer transition-colors"
-                          onClick={() => handleRateMovie(movie.id, star)}
-                        >
-                          <svg
-                            className={`h-4 w-4 ${star <= (userRatings[movie.id] || 0) ? "text-yellow-400 fill-current" : "text-gray-300"}`}
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                            />
-                          </svg>
-                        </button>
-                      ))}
-                      <span className="text-sm text-gray-600 ml-2">{userRatings[movie.id] || 0}/5</span>
-                    </div>
-                  </div>
                 </div>
               </Card>
             ))}
           </div>
         )}
+
+        {/* Pagination Controls */}
+        <div className="flex justify-between items-center mt-8">
+          <Button
+            onClick={handlePreviousPage}
+            variant="outline"
+            disabled={currentPage === 1}
+            className="px-4 py-2"
+          >
+            Previous
+          </Button>
+          <Button
+            onClick={handleNextPage}
+            variant="outline"
+            disabled={currentPage === totalPages}
+            className="px-4 py-2"
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
-  )
+  );
 }

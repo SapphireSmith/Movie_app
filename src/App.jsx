@@ -6,6 +6,7 @@ import Profile from "./Pages/Profile"
 import NavBar from "./Components/NavBar"
 import NotFound from "./Pages/NotFound"
 import Favorites from "./Pages/Favorites"
+import Movies from "./Pages/Movies"
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/favorites" element={<Favorites />} />
+        <Route path="/movies" element={<Movies />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<NotFound />} /> {/* Catch-all for unmatched routes */}
       </Routes>

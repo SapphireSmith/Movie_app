@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation, Link } from "react-router-dom";
 import {
   Navbar,
   Collapse,
@@ -8,29 +9,47 @@ import {
 } from "@material-tailwind/react";
 import { Bars3Icon, XMarkIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 
-function NavItem({ label, href }) {
+function NavItem({ label, href, isActive }) {
   return (
-    <a href={href}>
-      <Typography as="li" color="blue-gray" className="p-1 font-medium">
-        {label}
-      </Typography>
-    </a>
+    <Link
+      to={href}
+      className={`relative px-4 py-2 text-lg font-medium ${
+        isActive ? "text-blue-600 font-bold" : "text-gray-700"
+      } hover:text-blue-600`}
+    >
+      {label}
+    </Link>
   );
 }
 
-function NavList() {
+function NavList({ currentPath }) {
+  const navItems = [
+    { label: "Home", href: "/" },
+    { label: "Movies", href: "/movies" },
+    { label: "Favorites", href: "/favorites" },
+  ];
+
   return (
-    <ul className="mb-4 mt-2 flex flex-col gap-3 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center lg:gap-8">
-      <NavItem label="Home" href="/" />
-      <NavItem label="Movies" href="/movies" />
-      <NavItem label="Favorites" href="/favorites" />
-    </ul>
+    <div className="relative flex space-x-6">
+      {navItems.map((item) => (
+        <NavItem
+          key={item.href}
+          label={item.label}
+          href={item.href}
+          isActive={currentPath === item.href}
+        />
+      ))}
+    </div>
   );
 }
 
 export function NavBar() {
   const [open, setOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [highlightStyle, setHighlightStyle] = useState({});
+  const location = useLocation();
+  const currentPath = location.pathname;
+  const navRef = useRef(null);
 
   const handleOpen = () => setOpen((cur) => !cur);
 
@@ -39,17 +58,26 @@ export function NavBar() {
     const user = localStorage.getItem("movieAppProfile");
     setIsLoggedIn(!!user);
 
-    window.addEventListener(
-      "resize",
-      () => window.innerWidth >= 960 && setOpen(false)
+    // Set highlight position based on the active menu item
+    const activeItem = navRef.current?.querySelector(
+      `a[href="${currentPath}"]`
     );
-  }, []);
+    if (activeItem) {
+      const rect = activeItem.getBoundingClientRect();
+      const containerRect = navRef.current.getBoundingClientRect();
+      setHighlightStyle({
+        left: rect.left - containerRect.left,
+        width: rect.width,
+      });
+    }
+  }, [currentPath]);
 
   return (
     <Navbar color="transparent" fullWidth>
-      <div className="container mx-auto flex items-center justify-between text-blue-gray-900">
+      <div className="container mx-auto flex items-center justify-between text-blue-gray-900 relative">
         <Typography
-          as="a"
+          as={Link}
+          to="/"
           variant="h2"
           className="cursor-pointer text-center mb-2 font-extrabold tracking-tight"
           style={{
@@ -62,8 +90,13 @@ export function NavBar() {
           MovieBox
         </Typography>
 
-        <div className="hidden lg:block">
-          <NavList />
+        <div className="hidden lg:block relative" ref={navRef}>
+          <NavList currentPath={currentPath} />
+          {/* Simple Highlight */}
+          <div
+            className="absolute bottom-0 h-1 bg-blue-600 transition-all duration-300"
+            style={highlightStyle}
+          ></div>
         </div>
 
         {isLoggedIn ? (
@@ -102,7 +135,7 @@ export function NavBar() {
       </div>
       <Collapse open={open}>
         <div className="mt-2 rounded-xl bg-white py-2">
-          <NavList />
+          <NavList currentPath={currentPath} />
           {isLoggedIn ? (
             <Button
               className="mb-2"
