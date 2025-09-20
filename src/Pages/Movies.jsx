@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const TMDB_API_KEY = "32d0294720a95481124243e5ab3d02da";
+const TMDB_API_KEY = import.meta.env.REACT_APP_TMDB_API_KEY; // Use the environment variable
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w400";
 
 const Movies = () => {
