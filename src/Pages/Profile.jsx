@@ -147,8 +147,16 @@ export default function Profile() {
     console.log("Loaded profile from localStorage:", savedProfile);
     
     if (savedProfile) {
-      setProfile(JSON.parse(savedProfile))
-      setTempProfile(JSON.parse(savedProfile))
+      const parsedProfile = JSON.parse(savedProfile)
+      const watchedCount = JSON.parse(localStorage.getItem("movieAppWatched") || "[]").length
+      const favoritesCount = JSON.parse(localStorage.getItem("movieAppFavorites") || "[]").length
+      const enrichedProfile = {
+        ...parsedProfile,
+        watchedMovies: watchedCount,
+        favoriteMovies: favoritesCount,
+      }
+      setProfile(enrichedProfile)
+      setTempProfile(enrichedProfile)
     } else if (loadedProfile) {
       setProfile(loadedProfile)
       setTempProfile(loadedProfile)
