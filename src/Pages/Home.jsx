@@ -283,6 +283,8 @@ export default function HomePage() {
   const [sortBy, setSortBy] = useState("popularity");
   const [showFilters, setShowFilters] = useState(false);
   const [favorites, setFavorites] = useState([]);
+  const [watchlist, setWatchlist] = useState([]);
+  const [watched, setWatched] = useState([]);
   const [userRatings, setUserRatings] = useState({});
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1); // New state for pagination
@@ -331,8 +333,12 @@ export default function HomePage() {
   // Load user data from localStorage
   useEffect(() => {
     const savedFavorites = localStorage.getItem("movieAppFavorites");
+    const savedWatchlist = localStorage.getItem("movieAppWatchlist");
+    const savedWatched = localStorage.getItem("movieAppWatched");
     const savedRatings = localStorage.getItem("movieAppRatings");
     if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
+    if (savedWatchlist) setWatchlist(JSON.parse(savedWatchlist));
+    if (savedWatched) setWatched(JSON.parse(savedWatched));
     if (savedRatings) setUserRatings(JSON.parse(savedRatings));
   }, []);
 
@@ -348,6 +354,29 @@ export default function HomePage() {
     const newRatings = { ...userRatings, [movieId]: rating };
     setUserRatings(newRatings);
     localStorage.setItem("movieAppRatings", JSON.stringify(newRatings));
+  };
+
+  const handleToggleWatchlist = (movieId) => {
+    const updatedWatchlist = watchlist.includes(movieId)
+      ? watchlist.filter((id) => id !== movieId)
+      : [...watchlist, movieId];
+    setWatchlist(updatedWatchlist);
+    localStorage.setItem("movieAppWatchlist", JSON.stringify(updatedWatchlist));
+  };
+
+  const handleToggleWatched = (movieId) => {
+    const updatedWatched = watched.includes(movieId)
+      ? watched.filter((id) => id !== movieId)
+      : [...watched, movieId];
+    setWatched(updatedWatched);
+    localStorage.setItem("movieAppWatched", JSON.stringify(updatedWatched));
+
+    // Keep watchlist clean: once watched, remove from watchlist
+    if (!watched.includes(movieId) && watchlist.includes(movieId)) {
+      const updatedWatchlist = watchlist.filter((id) => id !== movieId);
+      setWatchlist(updatedWatchlist);
+      localStorage.setItem("movieAppWatchlist", JSON.stringify(updatedWatchlist));
+    }
   };
 
   const clearFilters = () => {
@@ -484,6 +513,22 @@ export default function HomePage() {
                 <div className="p-4">
                   <h3 className="font-semibold text-lg mb-2 line-clamp-1">{movie.title}</h3>
                   <p className="text-gray-600 text-sm mb-3 line-clamp-2">{movie.overview}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={() => handleToggleWatchlist(movie.id)}
+                      variant={watchlist.includes(movie.id) ? "secondary" : "outline"}
+                      className="text-xs py-1 px-3"
+                    >
+                      {watchlist.includes(movie.id) ? "In Watchlist" : "Add Watchlist"}
+                    </Button>
+                    <Button
+                      onClick={() => handleToggleWatched(movie.id)}
+                      variant={watched.includes(movie.id) ? "primary" : "outline"}
+                      className="text-xs py-1 px-3"
+                    >
+                      {watched.includes(movie.id) ? "Watched" : "Mark Watched"}
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
